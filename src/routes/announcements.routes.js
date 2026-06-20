@@ -15,6 +15,8 @@ import {
   updateAnnouncementValidator,
 } from '../validators/announcements.validator.js'
 
+import { authenticate } from '../middleware/auth.middleware.js'
+
 const router = Router()
 
 /**
@@ -91,18 +93,17 @@ router.get(
  *     summary: Create announcement
  *     tags:
  *       - Announcements
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Announcement'
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       201:
  *         description: Announcement created
+ *       401:
+ *         description: Unauthorized
  */
 router.post(
   '/',
+  authenticate,
   createAnnouncementValidator,
   createAnnouncement
 )
@@ -114,6 +115,8 @@ router.post(
  *     summary: Update announcement
  *     tags:
  *       - Announcements
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -123,9 +126,14 @@ router.post(
  *     responses:
  *       200:
  *         description: Announcement updated
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
  */
 router.patch(
   '/:id',
+  authenticate,
   idValidator,
   updateAnnouncementValidator,
   updateAnnouncement
@@ -138,6 +146,8 @@ router.patch(
  *     summary: Delete announcement
  *     tags:
  *       - Announcements
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -147,9 +157,14 @@ router.patch(
  *     responses:
  *       204:
  *         description: Announcement deleted
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
  */
 router.delete(
   '/:id',
+  authenticate,
   idValidator,
   deleteAnnouncement
 )

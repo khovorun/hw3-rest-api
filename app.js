@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import express from 'express'
 import swaggerUi from 'swagger-ui-express'
 import swaggerJsdoc from 'swagger-jsdoc'
@@ -5,6 +6,8 @@ import { errors as celebrateErrors } from 'celebrate'
 
 import announcementsRouter from './src/routes/announcements.routes.js'
 
+import cookieParser from 'cookie-parser'
+import authRouter from './src/routes/auth.routes.js'
 const app = express()
 
 // Swagger configuration
@@ -28,6 +31,7 @@ const swaggerOptions = {
 const swaggerSpec = swaggerJsdoc(swaggerOptions)
 
 app.use(express.json())
+app.use(cookieParser())
 
 app.use(
   '/api-docs',
@@ -37,7 +41,7 @@ app.use(
 
 app.use(celebrateErrors())
 
-// Routes
+app.use('/auth', authRouter)
 app.use('/announcements', announcementsRouter)
 
 // 404 Not Found handler
@@ -85,6 +89,12 @@ app.use((err, req, res, next) => {
   if (err.code === 'P2003') {
     return res.status(400).json({
       error: 'Foreign key constraint failed',
+    })
+  }
+
+  if (err.status) {
+    return res.status(err.status).json({
+      error: err.message,
     })
   }
 

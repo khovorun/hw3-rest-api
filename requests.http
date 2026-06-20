@@ -1,20 +1,6 @@
-### GET all
-GET http://localhost:3000/announcements
-
-### GET by id
-GET http://localhost:3000/announcements/1
-
-### POST
-POST http://localhost:3000/announcements
-Content-Type: application/json
-
-{
-  "title": "Продам ноутбук ASUS",
-  "description": "Відмінний стан, 16GB RAM",
-  "price": 18000,
-  "category": "sale",
-  "contactInfo": "0991234567"
-}
+### =========================
+### PUBLIC ANNOUNCEMENTS
+### =========================
 
 ### GET all
 GET http://localhost:3000/announcements
@@ -39,10 +25,73 @@ GET http://localhost:3000/announcements/1
 ### GET non existing id
 GET http://localhost:3000/announcements/99999
 
+
+### =========================
+### AUTH
+### =========================
+
+### REGISTER
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "username": "ivan123",
+  "password": "123456",
+  "name": "Іван"
+}
+
 ###
 
-### POST valid
+### LOGIN
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "username": "ivan123",
+  "password": "123456"
+}
+
+###
+
+### LOGIN invalid credentials
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "username": "ivan123",
+  "password": "wrongpassword"
+}
+
+###
+
+### GET current user
+GET http://localhost:3000/auth/me
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+###
+
+### REFRESH TOKEN
+POST http://localhost:3000/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "YOUR_REFRESH_TOKEN"
+}
+
+###
+
+### LOGOUT
+POST http://localhost:3000/auth/logout
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+
+### =========================
+### PROTECTED ANNOUNCEMENTS
+### =========================
+
+### CREATE announcement
 POST http://localhost:3000/announcements
+Authorization: Bearer YOUR_ACCESS_TOKEN
 Content-Type: application/json
 
 {
@@ -55,8 +104,23 @@ Content-Type: application/json
 
 ###
 
-### POST invalid
+### CREATE announcement without token (401)
 POST http://localhost:3000/announcements
+Content-Type: application/json
+
+{
+  "title": "Test",
+  "description": "Test description",
+  "price": 100,
+  "category": "sale",
+  "contactInfo": "0991234567"
+}
+
+###
+
+### CREATE invalid announcement
+POST http://localhost:3000/announcements
+Authorization: Bearer YOUR_ACCESS_TOKEN
 Content-Type: application/json
 
 {
@@ -65,8 +129,9 @@ Content-Type: application/json
 
 ###
 
-### PATCH existing
+### UPDATE own announcement
 PATCH http://localhost:3000/announcements/1
+Authorization: Bearer YOUR_ACCESS_TOKEN
 Content-Type: application/json
 
 {
@@ -75,8 +140,9 @@ Content-Type: application/json
 
 ###
 
-### PATCH non existing
+### UPDATE non existing announcement
 PATCH http://localhost:3000/announcements/99999
+Authorization: Bearer YOUR_ACCESS_TOKEN
 Content-Type: application/json
 
 {
@@ -85,10 +151,29 @@ Content-Type: application/json
 
 ###
 
-### DELETE existing
-DELETE http://localhost:3000/announcements/1
+### UPDATE чужого оголошення (403)
+PATCH http://localhost:3000/announcements/1
+Authorization: Bearer OTHER_USER_TOKEN
+Content-Type: application/json
+
+{
+  "price": 99999
+}
 
 ###
 
-### DELETE non existing
+### DELETE own announcement
+DELETE http://localhost:3000/announcements/1
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+###
+
+### DELETE non existing announcement
 DELETE http://localhost:3000/announcements/99999
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+###
+
+### DELETE чужого оголошення (403)
+DELETE http://localhost:3000/announcements/1
+Authorization: Bearer OTHER_USER_TOKEN
