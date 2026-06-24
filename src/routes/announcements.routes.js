@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { upload } from '../middleware/upload.middleware.js'
 
 import {
   getAnnouncements,
@@ -37,6 +38,8 @@ const router = Router()
  *         category:
  *           type: string
  *         contactInfo:
+ *           type: string
+ *         imageUrl:
  *           type: string
  *         createdAt:
  *           type: string
@@ -95,6 +98,26 @@ router.get(
  *       - Announcements
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               price:
+ *                 type: number
+ *               category:
+ *                 type: string
+ *               contactInfo:
+ *                 type: string
+ *               image:
+ *                 type: string
+ *                 format: binary
  *     responses:
  *       201:
  *         description: Announcement created
@@ -104,6 +127,7 @@ router.get(
 router.post(
   '/',
   authenticate,
+  upload.single('image'),
   createAnnouncementValidator,
   createAnnouncement
 )
@@ -123,6 +147,25 @@ router.post(
  *         required: true
  *         schema:
  *           type: integer
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               price:
+ *                 type: number
+ *               category:
+ *                 type: string
+ *               contactInfo:
+ *                 type: string
+ *               image:
+ *                 type: string
+ *                 format: binary
  *     responses:
  *       200:
  *         description: Announcement updated
@@ -134,6 +177,7 @@ router.post(
 router.patch(
   '/:id',
   authenticate,
+  upload.single('image'),
   idValidator,
   updateAnnouncementValidator,
   updateAnnouncement

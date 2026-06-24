@@ -177,3 +177,65 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 ### DELETE чужого оголошення (403)
 DELETE http://localhost:3000/announcements/1
 Authorization: Bearer OTHER_USER_TOKEN
+
+### CREATE announcement with image
+POST http://localhost:3000/announcements
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="title"
+
+Продам велосипед
+--boundary
+Content-Disposition: form-data; name="description"
+
+Trek у відмінному стані
+--boundary
+Content-Disposition: form-data; name="price"
+
+8500
+--boundary
+Content-Disposition: form-data; name="category"
+
+sale
+--boundary
+Content-Disposition: form-data; name="contactInfo"
+
+0991234567
+--boundary
+Content-Disposition: form-data; name="image"; filename="bike.jpg"
+Content-Type: image/jpeg
+
+< ./bike.jpg
+--boundary--
+
+### RATE LIMIT TEST 1
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "username": "ivan123",
+  "password": "123456"
+}
+
+### RATE LIMIT TEST 2
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "username": "ivan123",
+  "password": "123456"
+}
+
+### RATE LIMIT TEST 3
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "username": "ivan123",
+  "password": "123456"
+}
+
+### RATE LIMIT TEST 4
+...

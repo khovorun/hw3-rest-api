@@ -1,4 +1,7 @@
+import logger from '../logger.js'
 import prisma from '../../prisma/client.js'
+import fs from 'fs/promises'
+import cloudinary from '../cloudinary.js'
 
 export const getAnnouncements = async (req, res) => {
   const { search = '', sort = 'newest', page = 1 } = req.query
@@ -51,13 +54,38 @@ export const getAnnouncementById = async (req, res) => {
 }
 
 export const createAnnouncement = async (req, res) => {
+  let imageUrl = null
+
+  if (req.file) {
+    const result =
+      await cloudinary.uploader.upload(
+        req.file.path,
+        {
+          folder: 'announcements',
+        }
+      )
+
+    imageUrl = result.secure_url
+
+    await fs.unlink(req.file.path)
+
+    logger.info(
+      `Photo uploaded: ${imageUrl}`
+    )
+  }
+
   const announcement =
     await prisma.announcement.create({
       data: {
         ...req.body,
+        imageUrl,
         userId: req.user.id,
       },
     })
+
+  logger.info(
+    `Announcement created: ${announcement.id}`
+  )
 
   res.status(201).json(announcement)
 }
@@ -76,12 +104,35 @@ export const updateAnnouncement = async (req, res) => {
     })
   }
 
+  let imageUrl = announcement.imageUrl
+
+  if (req.file) {
+    const result =
+      await cloudinary.uploader.upload(
+        req.file.path,
+        {
+          folder: 'announcements',
+        }
+      )
+
+    imageUrl = result.secure_url
+
+    await fs.unlink(req.file.path)
+
+    logger.info(
+      `Photo updated: ${imageUrl}`
+    )
+  }
+
   const updatedAnnouncement =
     await prisma.announcement.update({
       where: {
         id: Number(req.params.id),
       },
-      data: req.body,
+      data: {
+        ...req.body,
+        imageUrl,
+      },
     })
 
   res.json(updatedAnnouncement)
@@ -106,6 +157,10 @@ export const deleteAnnouncement = async (req, res) => {
       id: Number(req.params.id),
     },
   })
+
+  logger.info(
+    `Announcement deleted: ${announcement.id}`
+  )
 
   res.status(204).end()
 }

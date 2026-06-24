@@ -1,3 +1,4 @@
+import logger from '../logger.js'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import prisma from '../../prisma/client.js'
@@ -72,6 +73,10 @@ export const register = async (req, res) => {
     {
       httpOnly: true,
     }
+  )
+
+  logger.info(
+  `New user registered: ${user.username}`
   )
 
   res.status(201).json({
@@ -222,15 +227,19 @@ export const refresh = async (req, res) => {
       },
     })
 
-    res.cookie(
-      'refreshToken',
-      refreshToken,
-      {
-        httpOnly: true,
-      }
-    )
+res.cookie(
+  'refreshToken',
+  refreshToken,
+  {
+    httpOnly: true,
+  }
+)
 
-    res.json({
+logger.info(
+  `User login: ${user.username}`
+)
+
+res.json({
       accessToken,
       refreshToken,
     })

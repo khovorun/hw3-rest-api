@@ -4,13 +4,66 @@ import swaggerUi from 'swagger-ui-express'
 import swaggerJsdoc from 'swagger-jsdoc'
 import { errors as celebrateErrors } from 'celebrate'
 
+import helmet from 'helmet'
+import cors from 'cors'
+import rateLimit from 'express-rate-limit'
+import pinoHttp from 'pino-http'
+import cookieParser from 'cookie-parser'
+
+import logger from './src/logger.js'
+
+import authRouter from './src/routes/auth.routes.js'
 import announcementsRouter from './src/routes/announcements.routes.js'
 
-import cookieParser from 'cookie-parser'
-import authRouter from './src/routes/auth.routes.js'
 const app = express()
 
-// Swagger configuration
+// =========================
+// SECURITY
+// =========================
+
+app.use(helmet())
+
+app.use(
+  cors({
+    origin: process.env.ALLOWED_ORIGINS.split(','),
+    credentials: true,
+  })
+)
+
+// =========================
+// LOGGING
+// =========================
+
+app.use(
+  pinoHttp({
+    logger,
+  })
+)
+
+// =========================
+// BODY PARSERS
+// =========================
+
+app.use(express.json())
+app.use(cookieParser())
+
+// =========================
+// RATE LIMIT FOR AUTH
+// =========================
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: {
+    error:
+      'Too many requests, please try again later',
+  },
+})
+
+// =========================
+// SWAGGER
+// =========================
+
 const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
@@ -24,14 +77,22 @@ const swaggerOptions = {
         url: 'http://localhost:3000',
       },
     ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
+    },
   },
   apis: ['./src/routes/*.js'],
 }
 
-const swaggerSpec = swaggerJsdoc(swaggerOptions)
-
-app.use(express.json())
-app.use(cookieParser())
+const swaggerSpec = swaggerJsdoc(
+  swaggerOptions
+)
 
 app.use(
   '/api-docs',
@@ -39,21 +100,50 @@ app.use(
   swaggerUi.setup(swaggerSpec)
 )
 
+// =========================
+// VALIDATION ERRORS
+// =========================
+
 app.use(celebrateErrors())
 
-app.use('/auth', authRouter)
-app.use('/announcements', announcementsRouter)
+// =========================
+// ROUTES
+// =========================
 
-// 404 Not Found handler
+app.use(
+  '/auth',
+  authLimiter,
+  authRouter
+)
+
+app.use(
+  '/announcements',
+  announcementsRouter
+)
+
+// =========================
+// 404
+// =========================
+
 app.use((req, res) => {
   res.status(404).json({
     error: 'Not found',
   })
 })
 
-// Error handling middleware
+// =========================
+// ERROR HANDLER
+// =========================
+
 app.use((err, req, res, next) => {
+  console.error(
+    '========== ERROR =========='
+  )
   console.error(err)
+  console.error(err.stack)
+  console.error(
+    '==========================='
+  )
 
   if (
     err.type === 'entity.parse.failed' &&
@@ -63,14 +153,6 @@ app.use((err, req, res, next) => {
       statusCode: 400,
       error: 'Bad Request',
       message: 'Invalid JSON',
-      validation: {
-        body: {
-          source: 'body',
-          keys: [],
-          message:
-            'Invalid JSON format in request body',
-        },
-      },
     })
   }
 
@@ -99,15 +181,25 @@ app.use((err, req, res, next) => {
   }
 
   res.status(500).json({
-    error: 'Internal server error',
+    error:
+      err.message ||
+      'Internal server error',
   })
 })
 
-const PORT = process.env.PORT || 3000
+// =========================
+// START SERVER
+// =========================
+
+const PORT =
+  process.env.PORT || 3000
 
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`)
-  console.log(
+  logger.info(
+    `Server is running on port ${PORT}`
+  )
+
+  logger.info(
     `API docs: http://localhost:${PORT}/api-docs`
   )
 })
